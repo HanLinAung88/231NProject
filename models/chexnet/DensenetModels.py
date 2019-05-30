@@ -20,7 +20,23 @@ class DenseNet121(nn.Module):
         self.densenet121 = torchvision.models.densenet121(pretrained=isTrained)
 
         kernelCount = self.densenet121.classifier.in_features
+	
+        self.densenet121.classifier = nn.Linear(kernelCount, classCount)
+
+    def forward(self, x):
+        x = self.densenet121(x)
+        return x
+
+class DenseNet121_Sigmoid(nn.Module):
+
+    def __init__(self, classCount, isTrained):
+	
+        super(DenseNet121_Sigmoid, self).__init__()
 		
+        self.densenet121 = torchvision.models.densenet121(pretrained=isTrained)
+
+        kernelCount = self.densenet121.classifier.in_features
+	
         self.densenet121.classifier = nn.Sequential(nn.Linear(kernelCount, classCount), nn.Sigmoid())
 
     def forward(self, x):
