@@ -15,7 +15,6 @@ import torch.optim as optim
 import torch.nn.functional as tfunc
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-import cv2
 from PIL import Image
 import PIL
 import torch.nn.functional as func
@@ -58,13 +57,8 @@ def load_and_resize_img(path):
     low resolution used in the small dataset.
     """    
   #  img = cv2.imread(path, 0) 
-    img = cv2.imread(path, 0)
-
-    img_2 = Image.open(path)
-    max_ind_2 = max(img_2.size)
-    print(img_2.size)
-    print(img.shape)
-    size = img.shape
+    img = Image.open(path)
+    size = img.size
     max_dim = max(size)
     max_ind = size.index(max_dim)
     
@@ -80,23 +74,7 @@ def load_and_resize_img(path):
         wsize = int((size[0] * hpercent))
         new_size = (320, wsize)
 
-
-    if max_ind_2 == 1:
-        # width fixed at 320
-        wpercent = (320 / float(size[0]))
-        hsize = int((size[1] * wpercent))
-        new_size_2 = (hsize, 320)
-        
-    else:
-        # height fixed at 320
-        hpercent = (320 / float(size[1]))
-        wsize = int((size[0] * hpercent))
-        new_size_2 = (320, wsize)
-
-    resized_img = Image.fromarray(cv2.resize(img, new_size).astype('uint8'))
-    resized_img_2 =  img_2.resize(new_size_2, PIL.Image.BILINEAR)
-    print(resized_img.size)
-    print(resized_img_2.size)
+    resized_img = img.resize(new_size, PIL.Image.BILINEAR)#Image.fromarray(cv2.resize(img, new_size).astype('uint8'))
 
     return resized_img
 
