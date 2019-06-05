@@ -53,7 +53,7 @@ class DenseNet169(nn.Module):
         
         kernelCount = self.densenet169.classifier.in_features
         
-        self.densenet169.classifier = nn.Sequential(nn.Linear(kernelCount, classCount), nn.Sigmoid())
+        self.densenet169.classifier = nn.Linear(kernelCount, classCount)
         
     def forward (self, x):
         x = self.densenet169(x)
