@@ -1,0 +1,3 @@
+Study,Atelectasis,Consolidation,Edema,Cardiomegaly,Pleural Effusion
+CheXpert-v1.0/valid/patient00000/study1,0.022808619,0.039035574,0.060653284,0.12045897,0.03949833
+CheXpert-v1.0/valid/patient00000/study2,0.22513443,0.11896812,0.07673919,0.8099599,0.31565785
