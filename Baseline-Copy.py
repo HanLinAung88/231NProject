@@ -31,10 +31,6 @@ from models.chexnet.DensenetModels import DenseNet121
 from models.models import ResNet18
 from tensorboardX import SummaryWriter
 
-get_ipython().run_line_magic('load_ext', 'autoreload')
-get_ipython().run_line_magic('autoreload', '2')
-
-
 # In[2]:
 
 
@@ -174,7 +170,7 @@ class ChexnetTrainer():
         #-------------------- SETTINGS: DATASET BUILDER |TRAIN|
                     
         datasetTrain = ChestXrayDataSet(data_dir=pathDirData,image_list_file=pathFileTrain, transform=transformSequence)              
-        dataLoaderTrain = DataLoader(dataset=datasetTrain, batch_size=trBatchSize, shuffle=True,  num_workers=4, pin_memory=True)
+        dataLoaderTrain = DataLoader(dataset=datasetTrain, batch_size=trBatchSize, shuffle=True,  num_workers=0, pin_memory=False)
         
         
         
@@ -183,7 +179,7 @@ class ChexnetTrainer():
         
         #-------------------- SETTINGS: DATASET BUILDERS |VAL|
         datasetVal =   ChestXrayDataSet(data_dir=pathDirData, image_list_file=pathFileVal, transform=transformSequence)
-        dataLoaderVal = DataLoader(dataset=datasetVal, batch_size=trBatchSize, shuffle=False, num_workers=4, pin_memory=True)
+        dataLoaderVal = DataLoader(dataset=datasetVal, batch_size=trBatchSize, shuffle=False, num_workers=0, pin_memory=False)
         
         
         
@@ -195,15 +191,17 @@ class ChexnetTrainer():
 
         #-------------------- SETTINGS: LOSS
         loss = lossCriterion
+       
+        counter = 0
         
-        #---- Load checkpoint 
+	#---- Load checkpoint 
         if checkpoint != None:
             modelCheckpoint = torch.load(checkpoint)
             model.load_state_dict(modelCheckpoint['state_dict'])
             optimizer.load_state_dict(modelCheckpoint['optimizer'])
+            counter = modelCheckpoint['counter']
         
         #---- TRAIN THE NETWORK
-        counter = 0
         lossMIN = 100000
         
         for epochID in range (0, trMaxEpoch):
@@ -309,13 +307,13 @@ class ChexnetTrainer():
                 bPRED[:,1] = varOutput[:,1]
                 bPRED[:,2] = varOutput[:,2]
                 
-                softmax = torch.nn.Softmax()
-                soft_a = softmax(varOutput[:,3:6]).data
+                soft_a = torch.nn.functional.softmax(varOutput[:,3:6], dim=-1).data
+
                 a0, a1, a2 = soft_a[:, 0], soft_a[:, 1], soft_a[:, 2]
                 bPRED[:, 3] = a1/(a0+a1)
-                soft_b = softmax(varOutput[:,6:9]).data
+                soft_b = torch.nn.functional.softmax(varOutput[:,6:9], dim=-1).data
                 b0, b1, b2 = soft_b[:, 0], soft_b[:, 1], soft_b[:, 2]
-                bPRED[:, 3] = b1/(b0+b1)
+                bPRED[:, 4] = b1/(b0+b1)
 
                 outPRED = torch.cat((outPRED, bPRED.data), 0)            
                 outGT = torch.cat((outGT, target), 0)
@@ -335,6 +333,7 @@ class ChexnetTrainer():
             aurocMean = np.array(aurocIndividual).mean()
 
             print("AUROC val", aurocMean)
+            print("AUROC all", aurocIndividual)
             writer.add_scalar('logs/val_auroc', aurocMean, counter)
 
         return outLoss, losstensorMean, aurocMean            
@@ -471,7 +470,7 @@ class ChexnetTrainer():
         transformSequence=transforms.Compose(transformList)
         
         datasetTest = DatasetGenerator(pathImageDirectory=pathDirData, pathDatasetFile=pathFileTest, transform=transformSequence)
-        dataLoaderTest = DataLoader(dataset=datasetTest, batch_size=trBatchSize, num_workers=4, shuffle=False, pin_memory=True)
+        dataLoaderTest = DataLoader(dataset=datasetTest, batch_size=trBatchSize, num_workers=0, shuffle=False, pin_memory=False)
         
         outGT = torch.FloatTensor().cuda()
         outPRED = torch.FloatTensor().cuda()
@@ -525,7 +524,7 @@ trMaxEpoch = 50
 transResize = (300, 300)
 transCrop = 224
 launchTimestamp = ''
-checkpoint = None
+checkpoint = 'forward/m-8370_0.771.pth.tar'
 ChexnetTrainer.train(DATA_DIR,TRAIN_IMAGE_LIST,VAL_IMAGE_LIST,nnArchitecture, nnIsTrained, nnClassCount, trBatchSize, trMaxEpoch, transResize, transCrop, launchTimestamp, checkpoint,classes)
 
 
